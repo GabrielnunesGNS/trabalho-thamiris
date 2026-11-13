@@ -5,9 +5,7 @@ import csv
 import os
 
 # Exemplo de leitura do arquivo:
-PATH = 'base_de_dados/base_10000.csv'
-dadosCsv = pd.read_csv(PATH, sep=';')#leitura dos dados
-lista = dadosCsv.to_dict(orient="records")
+
 
 def busca_linear(lista,coluna,chave):
     tipo = 'busca linear'
@@ -18,21 +16,35 @@ def busca_linear(lista,coluna,chave):
         if lista[i][coluna] == chave:
             return {
                 'funcao':tipo,
+                'chave':chave,
                 'tamanho lista':base,
                 'posicao':i+2,
                 'comparacoes':comparacoes
             }
-    return -1
+    return {
+        'funcao':tipo,
+        'chave':chave,
+        'tamanho lista':base,
+        'posicao':'não encontrado',
+        'comparacoes':comparacoes
+    }
 
 def busca_linear_rec(lista,coluna, chave, i=0,comparacoes=0):
     comparacoes = comparacoes
     tipo = 'busca linear rec'
     base = len(lista)
     if i >= len(lista):
-        return -1
+        return {
+                'funcao':tipo,
+                'chave':chave,
+                'tamanho lista':base,
+                'posicao':'não encontrado',
+                'comparacoes':comparacoes
+            }
     if lista[i][coluna] == chave:
                 return {
                     'funcao':tipo,
+                    'chave':chave,
                     'tamanho lista':base,
                     'posicao':i+2,
                     'comparacoes':comparacoes
@@ -52,7 +64,8 @@ def bubble_sort(lista):
         for j in range(n - 1 - i):
             comparacoes += 1
 
-            if lista[j] > lista[j + 1]:
+            # Compara os IDs dos dicionários
+            if lista[j]['id'] > lista[j + 1]['id']:
                 lista[j], lista[j + 1] = lista[j + 1], lista[j]
 
                 trocas += 1
@@ -60,35 +73,76 @@ def bubble_sort(lista):
 
         if not trocou:
             break
+
     return lista
 
-def busca_binaria(lista, chave):
+def busca_binaria(lista,coluna,chave):
+    tipo = 'busca binaria'
+    base = len(lista)
     lista = bubble_sort(lista)
     ini, fim = 0, len(lista) - 1
+    comparacoes = 0
     while ini <= fim:
+        comparacoes += 1
         meio = (ini + fim) // 2
-        if lista[meio] == chave:
-            return meio
-        elif lista[meio] < chave:
+        if lista[meio][coluna] == chave:
+            return {
+                    'funcao':tipo,
+                    'chave':chave,
+                    'tamanho lista':base,
+                    'posicao':meio,
+                    'comparacoes':comparacoes
+                }
+        elif lista[meio][coluna] < chave:
             ini = meio + 1
         else:
             fim = meio - 1
-    return -1
+    return {
+            'funcao':tipo,
+            'chave':chave,
+            'tamanho lista':base,
+            'posicao':'não encontrado',
+            'comparacoes':comparacoes
+        }
 
-def busca_binaria_rec(lista, alvo, ini=0, fim=None):
-    lista = bubble_sort(lista)
+def busca_binaria_rec(lista, coluna, chave, ini=0, fim=None, comparacoes=0):
+
+    tipo = 'busca binaria rec'
+    base = len(lista)
+
     if fim is None:
         fim = len(lista) - 1
+
     if ini > fim:
-        return -1
+        return {
+            'funcao': tipo,
+            'tamanho lista': base,
+            'posicao': -1,
+            'comparacoes': comparacoes
+        }
+
     meio = (ini + fim) // 2
-    print("Meio:", meio)
-    if lista[meio] == alvo:
-        return meio
-    elif lista[meio] < alvo:
-        return busca_binaria_rec(lista, alvo, meio + 1, fim)
+    comparacoes += 1
+
+    if lista[meio][coluna] == chave:
+        return {
+            'funcao': tipo,
+            'tamanho lista': base,
+            'posicao': meio,
+            'comparacoes': comparacoes
+        }
+
+    elif lista[meio][coluna] < chave:
+        return busca_binaria_rec(
+            lista, coluna, chave,
+            meio + 1, fim, comparacoes
+        )
+
     else:
-        return busca_binaria_rec(lista, alvo, ini, meio - 1)
+        return busca_binaria_rec(
+            lista, coluna, chave,
+            ini, meio - 1, comparacoes
+        )
 
 def teste_func_un(funcao, *args):
     inicio = perf_counter()
@@ -107,7 +161,6 @@ def teste_func_mul(funcao,*args):
         resultado = funcao(*args)
         fim = perf_counter()
         tempos.append(fim - inicio)
-        print
     return {'resultado':resultado, 
             'tempo fim':tempos,
             'repeticoes':repeticoes
@@ -152,7 +205,8 @@ def salvar(data,caminho):
     resultados.append({
         "algoritmo": dados['funcao'],
         "tamanho_base": dados['tamanho lista'],
-        "cenario": dados['posicao'],
+        "alvo":dados['chave'],
+        "posicao": dados['posicao'],
         "comparacoes": dados['comparacoes'],
         "tempo_medio": data['tempo fim']
     })
@@ -191,7 +245,10 @@ def ambiente_teste(funcao,*args):
     else:
         data = teste_func_mul(funcao, *args)
 
+   
+
     # Salva os resultados individuais
+    
     salvar(data, caminhoResultados)
 
     # Calcula e salva as médias, caso existam repetições
@@ -206,9 +263,36 @@ def ambiente_teste(funcao,*args):
     print('Teste finalizado!')
 
 
-def inicio(lista):
-    bdLista = lista 
+def inicio():
+    
     print('inicio')
+    
+    while True:
+        try:
+            path = int(input(
+                'Qual base de arquivo deseja executar o ambiente?\n'
+                '1 - base 1.000\n'
+                '2 - base 10.000\n'
+                '3 - base 100.000\n'
+                'Opção: '
+            ))
+
+            if path not in (1, 2):
+                print('Opção inválida! Digite 1 ou 2.')
+                continue
+
+            break
+
+        except ValueError:
+            print('Digite apenas números.')
+    
+    if path == 1 :
+        arquivo = 'base_de_dados/base1000.csv'
+    elif path == 2:
+        arquivo = 'base_de_dados/base10000.csv'
+    else:  
+        arquivo = 'base_de_dados/base1000000.csv' 
+    
     
     while True:
         try:
@@ -231,19 +315,18 @@ def inicio(lista):
     if opcao == 1:
         funcao = busca_linear
     else:
+        
         funcao = busca_binaria
     
+    #coluna que sera localizado o registros
+    chave = int(input('insira o id que deseja localizar:\n')) #chave para ser localizada
+    coluna = 'id' #coluna de busca
+    lista  = dadosCsv = pd.read_csv(arquivo, sep=';')#leitura dos dados
+    lista = dadosCsv.to_dict(orient="records")
+    
+    
+    
+    ambiente_teste(funcao,lista,coluna,chave)
 
-    
-    
-    chave = str(input('insita nome para busca \n'))# inserir o nome da busca para roda o teste
-    coluna = 'nome' #coluna que sera localizado o registro
-    
-    
-    
-    
-    
-    ambiente_teste(funcao,bdLista,coluna,chave)
-
-inicio(lista)
+inicio()
 
