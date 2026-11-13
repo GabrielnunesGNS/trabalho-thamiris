@@ -1,0 +1,4 @@
+algoritmo,tamanho_base,cenario,comparacoes,tempo_medio
+busca linear rec,1000,35,33,"{'media': 2.1149999884073623e-05, 'mediana': 7.199999345175456e-06, 'desvio_padrao': 3.8749630903465556e-05}"
+busca linear,10000,7608,7607,"{'media': 0.0003461799933575094, 'mediana': 0.0003299000090919435, 'desvio_padrao': 4.863883511969935e-05}"
+busca linear,10000,7608,7607,"{'media': 0.00033562499738764017, 'mediana': 0.0003263999824412167, 'desvio_padrao': 3.391991042203044e-05}"
